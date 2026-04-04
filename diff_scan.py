@@ -1,19 +1,15 @@
-import socket
-import subprocess
-import ipaddress
+import socket, threading
 
-def port_scan(ip):
-    # escanear portas e adicionar os resultados para um arquivo.
-    try:
-        with open('ports.txt', 'w') as f:
-            f.write(f'[!] Open ports on {ip} [!]')
-            s = socket.socket(socket.AF_INET, socket.SOCK_steam)
-            for p in range(1, 65535):
-                r = s.connect_ex((ip, p))
-                if r == 0:
-                    f.write(f'=> {p}')
-    except Exception as e:
-        print(f'[!] {e} [!]')
+def port_scan(ip, port):
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.settimeout(1)
+        try:
+            r = s.connect_ex((ip, port))
+            if r == 0:
+                print(f'{port} OPEN')
+            s.close()
+        except socket.error:
+            print(f'{port} ERROR')
 
 def check_diff(old_pl, new_pl):
     # comparar scan antigo com novo.
@@ -21,6 +17,18 @@ def check_diff(old_pl, new_pl):
 
 def mail(changelist):
     # enviar as diferenças para um email.
+    pass
 
 if __name__ == '__main__':
-    port_scan('192.168.0.4')
+    target_ip = '192.168.0.7'
+    try:
+        threads = []
+        for port in range(1, 65536):
+            thread = threading.Thread(target=port_scan, args=(target_ip, port))
+            threads.append(thread)
+            thread.start()
+
+        for thread in threads:
+            thread.join()
+    except Exception as e:
+        print('[!] Error/Finished [!]\n {e}')
